@@ -3,6 +3,8 @@ import AktualizacjaPrzepisow from "./AktualizacjaPrzepisow";
 import ImportArkuszy from "./ImportArkuszy";
 import Pracownicy from "./Pracownicy";
 import { PanelBrakow } from "./PierwszaOcena";
+import { Ikona } from "./Ikona";
+import { POZYCJE, Powloka, type Widok } from "./Powloka";
 import { pobierzReguly, pobierzZrodla, ROLE, ustawRole, zapisanaRola, type RegulaPanelu, type WersjaRegul, type Zrodla } from "./api";
 
 function Regula({ r }: { r: RegulaPanelu }) {
@@ -32,7 +34,7 @@ export default function App() {
   const [wersje, setWersje] = useState<WersjaRegul[] | null>(null);
   const [zrodla, setZrodla] = useState<Zrodla | null>(null);
   const [blad, setBlad] = useState<string | null>(null);
-  const [zakladka, setZakladka] = useState<"pracownicy" | "zrodla" | "import" | "braki" | "przepisy">("pracownicy");
+  const [zakladka, setZakladka] = useState<Widok>("pracownicy");
   const [rola, setRola] = useState<string>(zapisanaRola);
   const [gotowa, setGotowa] = useState(false);
 
@@ -52,24 +54,43 @@ export default function App() {
   const pytania = [...new Map((wersje ?? []).flatMap((w) => w.reguly)
     .filter((r) => r.id === "termin.pytanie-zmiana-oceniajacego").map((r) => [r.id, r] as const)).values()];
 
+  // Nazwa roli z ROLE: „oceniający – naczelnik (K-002)” → ["oceniający", "naczelnik (K-002)"].
+  const podziel = (nazwa: string): [string, string] => {
+    const [glowna, ...reszta] = nazwa.split(" – ");
+    return [glowna, reszta.join(" – ")];
+  };
+  const biezaca = podziel(ROLE.find((x) => x.login === rola)?.nazwa ?? rola);
+  const tytul = zakladka === "rola" ? "Rola w demo" : POZYCJE.find((p) => p.widok === zakladka)?.nazwa;
+
   return (
-    <main>
-      <header>
-        <h1>Cyfrowy Asystent Ocen Okresowych</h1>
-        <label className="rola">
-          Rola{" "}
-          <select value={rola} onChange={(e) => setRola(e.target.value)} aria-label="Rola">
-            {ROLE.map((x) => <option key={x.login} value={x.login}>{x.nazwa}</option>)}
-          </select>
-        </label>
-      </header>
-      <nav className="zakladki">
-        <button className={zakladka === "pracownicy" ? "aktywna" : ""} onClick={() => setZakladka("pracownicy")}>Pracownicy</button>
-        <button className={zakladka === "zrodla" ? "aktywna" : ""} onClick={() => setZakladka("zrodla")}>Panel źródeł</button>
-        <button className={zakladka === "import" ? "aktywna" : ""} onClick={() => setZakladka("import")}>Import arkuszy</button>
-        <button className={zakladka === "braki" ? "aktywna" : ""} onClick={() => setZakladka("braki")}>Panel braków</button>
-        <button className={zakladka === "przepisy" ? "aktywna" : ""} onClick={() => setZakladka("przepisy")}>Aktualizacja przepisów</button>
-      </nav>
+    <Powloka widok={zakladka} onWidok={setZakladka} rola={biezaca}>
+      <h1 className="tytul-widoku">{tytul}</h1>
+
+      {zakladka === "rola" && (
+        <section>
+          <p className="opis">Konta demonstracyjne. Uprawnienia sprawdza API, więc każda rola widzi tylko swoje dane.</p>
+          <div className="lista">
+            {ROLE.map((x) => {
+              const [glowna, opis] = podziel(x.nazwa);
+              return (
+                <button
+                  key={x.login}
+                  type="button"
+                  className="pozycja mala"
+                  aria-pressed={x.login === rola}
+                  onClick={() => { setRola(x.login); setZakladka("pracownicy"); }}
+                >
+                  <span className="pozycja-srodek">
+                    <span className="pozycja-tytul">{glowna}</span>
+                    {opis && <span className="pozycja-opis">{opis}</span>}
+                  </span>
+                  <span className="pozycja-strzalka"><Ikona nazwa={x.login === rola ? "ok" : "dalej"} /></span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {zakladka === "pracownicy" && gotowa && <Pracownicy key={rola} />}
       {zakladka === "import" && gotowa && <ImportArkuszy key={rola} />}
@@ -120,6 +141,6 @@ export default function App() {
           {zrodla.pominiete.map((p) => <p key={p.wzorzec} className="opis">Pominięte: {p.wzorzec} – {p.powod}</p>)}
         </section>
       )}
-    </main>
+    </Powloka>
   );
 }

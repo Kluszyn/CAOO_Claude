@@ -1,0 +1,79 @@
+/* Skórka CAOO nad tokenami Dopiny: układ i pismo jak w Kompasie (COI/mObywatel: Open Sans, przycisk i pole
+   z promieniem 4, wiersz z promieniem 8, treść 16/24, tytuł 28/36), kolorystyka czarna z czerwonym znakiem
+   (Karol 22.11.2026). Akcje, łącza i zaznaczenia są czarne; czerwień --k-marka tylko jako znak (kreska przy
+   aktywnej pozycji menu). Błędy zostają w --k-danger-*, więc nie zlewają się ze znakiem. */
+@font-face{font-family:"Open Sans";font-weight:400;font-display:swap;src:url('./fonty/open-sans-latin-400-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Open Sans";font-weight:400;font-display:swap;src:url('./fonty/open-sans-latin-ext-400-normal.woff2') format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Open Sans";font-weight:600;font-display:swap;src:url('./fonty/open-sans-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Open Sans";font-weight:600;font-display:swap;src:url('./fonty/open-sans-latin-ext-600-normal.woff2') format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:"Open Sans";font-weight:700;font-display:swap;src:url('./fonty/open-sans-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+2074,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD}
+@font-face{font-family:"Open Sans";font-weight:700;font-display:swap;src:url('./fonty/open-sans-latin-ext-700-normal.woff2') format('woff2');unicode-range:U+0100-02AF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+
+:root{
+  /* pismo: Open Sans; „medium” = 600, „semibold” = 700 */
+  --f-rodzina:"Open Sans", Arial, sans-serif; --f-regular:400; --f-medium:600; --f-semibold:700;
+  --t-micro-r:12px; --t-micro-l:16px;
+  --t-small-r:14px; --t-small-l:20px;
+  --t-ui-r:16px; --t-ui-l:24px;
+  --t-body-r:16px; --t-body-l:24px;
+  --t-field-r:16px; --t-field-l:24px;
+  --t-section-r:20px; --t-section-l:28px;
+  --t-value-r:24px; --t-value-l:32px; --t-value-s:0;
+  --t-title-r:28px; --t-title-l:36px; --t-title-s:0;
+
+  /* kolory: białe tło, czarna akcja i łącze, neutralne szarości bez domieszki błękitu */
+  --k-canvas:#ffffff; --k-surface:#ffffff; --k-surface-hover:#f5f5f6; --k-surface-pressed:#ebebed;
+  --k-text:#101317; --k-text-secondary:#2c3138; --k-text-muted:#52575f;
+  --k-line:#dfe0e3; --k-line-subtle:#ececee; --k-line-control:#b9bbc0; --k-field-border:#8a8d93;
+  --k-action:#202020; --k-action-border:#202020; --k-action-hover:#3a3a3a; --k-action-pressed:#000000; --k-action-text:#ffffff;
+  --k-disabled-bg:#efeff1; --k-disabled-border:#d8d9dc; --k-disabled-text:#7b7e84;
+  --k-focus:#202020;
+  --k-info-bg:#efeff1; --k-info-text:#202020;
+  --k-success-bg:#e6f4ea; --k-success-text:#176b2c; --k-success-pelny:#1e8e3e;
+  --k-danger-bg:#fdecee; --k-danger-text:#b0162f;
+  --k-attention-bg:#fff4d6; --k-attention-text:#6b4800;
+  --k-neutral-bg:#efeff1; --k-neutral-text:#3b3e44;
+  --k-note-bg:#fff4d6; --k-note-text:#5c3d00;
+  --k-tag-bg:#efeff1; --k-tag-border:#efeff1; --k-tag-text:#3b3e44;
+  --k-tab-active:#efeff1; --k-table-head:#f5f5f6;
+
+  /* wiersz wyboru jak w mObywatelu (neutralny), łącze, wybrana opcja przełącznika i czerwony znak marki */
+  --k-wiersz:#f5f5f6; --k-wiersz-hover:#ebebed; --k-wiersz-pressed:#e1e1e4;
+  --k-link:#101317; --k-link-pressed:#52575f; --k-segment-wybrany:#ffffff;
+  --k-marka:#d4213d;
+
+  /* promienie: przycisk i pole 4 (gov.pl), znacznik pigułka, karta 12 */
+  --r-mark:2px; --r-xs:24px; --r-sm:4px; --r-card:12px; --r-wiersz:8px;
+
+  /* karty bez cienia, jak w gov.pl */
+  --s-card:none;
+
+  /* przycisk i pole 48 px */
+  --c-action:48px; --c-field:48px;
+}
+
+/* Tryb ciemny: ten sam selektor co ciemny motyw Dopiny w tokeny.css (wyższa szczegółowość niż :root),
+   więc wartości skórki wygrywają także przy ciemnym motywie systemu. Akcja odwrócona (jasny przycisk,
+   ciemny tekst), znak marki w jaśniejszej czerwieni dla kontrastu na ciemnym tle. */
+@media (prefers-color-scheme:dark){
+  :root:not([data-motyw="jasny"]){
+    color-scheme:dark;
+    --k-canvas:#121214; --k-surface:#121214; --k-surface-hover:#1e1e21; --k-surface-pressed:#27272b;
+    --k-text:#f2f2f3; --k-text-secondary:#d2d3d6; --k-text-muted:#9c9ea4;
+    --k-line:#2e2e33; --k-line-subtle:#242428; --k-line-control:#4c4d53; --k-field-border:#6e7077;
+    --k-action:#f2f2f3; --k-action-border:#f2f2f3; --k-action-hover:#ffffff; --k-action-pressed:#d2d3d6; --k-action-text:#121214;
+    --k-disabled-bg:#1e1e21; --k-disabled-border:#2e2e33; --k-disabled-text:#6e7077;
+    --k-focus:#f2f2f3;
+    --k-info-bg:#242428; --k-info-text:#d2d3d6;
+    --k-success-bg:#11301c; --k-success-text:#7dd49a; --k-success-pelny:#34a853;
+    --k-danger-bg:#3a1419; --k-danger-text:#ff8a95;
+    --k-attention-bg:#352a0d; --k-attention-text:#f3c969;
+    --k-neutral-bg:#242428; --k-neutral-text:#c5c6ca;
+    --k-note-bg:#352a0d; --k-note-text:#f3d98a;
+    --k-tag-bg:#242428; --k-tag-border:#242428; --k-tag-text:#c5c6ca;
+    --k-tab-active:#242428; --k-table-head:#1e1e21;
+    --k-wiersz:#1e1e21; --k-wiersz-hover:#27272b; --k-wiersz-pressed:#2f2f34;
+    --k-link:#f2f2f3; --k-link-pressed:#c5c6ca; --k-segment-wybrany:#2f2f34;
+    --k-marka:#f0475e;
+  }
+}
