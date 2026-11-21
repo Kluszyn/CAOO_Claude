@@ -207,7 +207,10 @@ button.graf-wezel.propozycja { background: var(--k-attention-bg); }
 @media (max-width: 1279px) {
   .powloka { grid-template-columns: 72px minmax(0, 1fr); }
   .menu { padding: var(--o-24) var(--o-12); }
-  .menu .napis { display: none; }
+  /* Zwinięte menu: napis znika z ekranu, ale zostaje nazwą przycisku dla czytnika ekranu i sterowania głosem
+     (ikona ma aria-hidden). Blok konta chowamy całkiem, bo jego przycisk „Zmień rolę” zastępuje pozycja „Rola”. */
+  .menu button .napis { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+  .menu .konto .napis { display: none; }
   .menu button.znak, .menu button.poz { justify-content: center; padding: 0; }
   .menu button.poz.tylko-zwiniete { display: flex; }
   .tresc { padding: var(--o-24) var(--o-32) var(--o-64); }
@@ -217,7 +220,7 @@ button.graf-wezel.propozycja { background: var(--k-attention-bg); }
   .menu { position: fixed; inset: auto 0 0 0; height: auto; flex-direction: row; justify-content: space-around; gap: 0; padding: var(--o-4); border-right: 0; border-top: 1px solid var(--k-line); z-index: 100; }
   .menu button.znak, .menu-dol { display: none; }
   .menu button.poz { flex: 1; min-width: 0; flex-direction: column; justify-content: center; gap: var(--o-2); min-height: 64px; padding: var(--o-4) var(--o-2); font-size: var(--t-micro-r); line-height: var(--t-micro-l); text-align: center; }
-  .menu .poz .napis { display: block; }
+  .menu button.poz .napis { display: block; position: static; width: auto; height: auto; margin: 0; overflow: visible; clip-path: none; white-space: normal; }
   .menu .pelna { display: none; }
   .menu .krotka { display: inline; }
   .menu button.poz[aria-current="page"] { background: none; box-shadow: inset 0 3px 0 var(--k-marka); }
