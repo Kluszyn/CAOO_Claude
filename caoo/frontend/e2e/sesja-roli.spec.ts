@@ -200,13 +200,15 @@ async function odwroconeOdpowiedzi(page: Page, api: MakietaApi) {
     await wybierzRole(page, /kierownik urzędu/);
     await expect.poll(() => api.ile(PORZUCONA), { message: "Brak logowania roli kierownik" }).toBeGreaterThan(0);
 
-    od.lista = api.lista.length;
-    od.widok = api.widok.length;
     await wybierzRole(page, /^kadry/);
     await expect.poll(() => api.ile(OSTATNIA), {
       message: "Logowanie roli kadry nie wyszło, choć logowanie roli kierownik wciąż trwa",
     }).toBeGreaterThan(0);
 
+    // Liczymy od chwili tuż przed odpowiedzią logowania kadr: wcześniej sesja kadr nie istnieje,
+    // a zapytania z przełączania ról (np. chwilowy montaż widoku ze starą sesją) nie są przedmiotem kroku 5.
+    od.lista = api.lista.length;
+    od.widok = api.widok.length;
     await api.zwolnij(OSTATNIA); // najpierw odpowiedź ostatnio wybranej roli…
     await expect(naglowekListy(page, OSTATNIA)).toBeVisible();
 
