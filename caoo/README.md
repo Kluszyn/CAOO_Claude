@@ -171,4 +171,6 @@ npm ci && npx playwright install chromium   # raz
 npm run test:e2e                             # sam uruchamia vite na 5173; backend niepotrzebny
 ```
 
+Na Windows wystarczy uruchomić `caoo\frontend\test-e2e.cmd` z cmd albo z PowerShella, z dowolnego folderu. Skrypt instaluje zależności z `package-lock.json`, przeglądarkę dla Playwright z projektu i uruchamia test. Omija blokadę skryptów `npm.ps1` w PowerShellu.
+
 `e2e/sesja-roli.spec.ts` podstawia makietę API w przeglądarce. Logowanie roli startowej najpierw się przeciąga, a potem kończy błędem 503. Test sprawdza, że w tym czasie nie idzie żadne zapytanie o listę pracowników. Ponowienie może być samoczynne albo przyciskiem „Spróbuj ponownie”. Potem następują dwie szybkie zmiany roli (kierownik → kadry), a odpowiedzi logowania wracają w odwrotnej kolejności. Na koniec lista pracowników i kalendarz ocen mają iść z tokenem roli kadry, także po powrocie do widoku i po odświeżeniu strony. Kolejność odpowiedzi ustalają bramki w makiecie, nie opóźnienia czasowe.
