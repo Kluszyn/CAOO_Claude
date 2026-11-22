@@ -1,8 +1,9 @@
 import { expect, test, type Page, type Request, type Route } from "@playwright/test";
 
 /**
- * Sesja roli w przeglądarce (App.tsx + api.ts), na makiecie API – bez backendu.
+ * Test regresyjny sesji roli w przeglądarce (App.tsx + api.ts), na makiecie API – bez backendu.
  *
+ * Kroki scenariusza:
  * 1. Logowanie roli startowej się przeciąga – w tym czasie lista pracowników nie może pójść bez sesji.
  * 2. Pierwsza próba logowania kończy się błędem 503.
  * 3. Ponowienie się udaje. Test przyjmuje oba warianty: aplikacja ponawia sama albo pokazuje
@@ -11,6 +12,9 @@ import { expect, test, type Page, type Request, type Route } from "@playwright/t
  *    (najpierw ostatnio wybranej roli, potem porzuconej).
  * 5. Po wszystkim lista pracowników jest pobierana z sesją ostatnio wybranej roli – również po
  *    ponownym wejściu w widok i po odświeżeniu strony.
+ *
+ * Testy: kroki 1–3, kroki 4–5 (start bez błędu) i pełny scenariusz 1–5. Dzięki temu na kodzie bez
+ * ponowienia widać też osobno błąd kolejności odpowiedzi.
  *
  * Kolejność odpowiedzi ustalają bramki, nie opóźnienia czasowe, więc wynik nie zależy od szybkości maszyny.
  * Makieta wydaje token `token-<login>`, a dane zwraca tylko z ważnym tokenem (inaczej 401) – jak API.
@@ -143,17 +147,19 @@ const chwila = (page: Page) => page.waitForTimeout(300);
 
 const obce = (tokeny: (string | null)[], login: string) => tokeny.filter((t) => t !== token(login));
 
-test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logowania i odwróconych odpowiedzi", async ({ page }) => {
-  const api = new MakietaApi();
-  await api.podlacz(page);
+// --- Kroki scenariusza (wspólne dla testów poniżej) ---------------------------------------------
 
+const BRAK_LISTY = /^Pracownicy · /;
+
+/** Kroki 1–3: opóźnione logowanie roli startowej, 503 przy pierwszej próbie, udane ponowienie. */
+async function startZBledemIPonowieniem(page: Page, api: MakietaApi) {
   await test.step("opóźnione logowanie: bez sesji nie ma zapytania o listę", async () => {
     api.zatrzymaj(START, 503);
     await page.goto("/");
     await expect.poll(() => api.ile(START), { message: "Aplikacja nie zaczęła logowania roli startowej" }).toBeGreaterThan(0);
     await chwila(page); // logowanie wciąż trwa (StrictMode w trybie dev może wysłać dwa)
     expect(api.lista, "Lista pracowników poszła, zanim logowanie się skończyło").toEqual([]);
-    await expect(page.getByRole("heading", { name: /^Pracownicy · / })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: BRAK_LISTY })).toHaveCount(0);
   });
 
   const logowaniaPrzedBledem = api.logowania.length;
@@ -162,7 +168,7 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     await api.zwolnij(START);
     await chwila(page);
     expect(api.lista, "Po błędzie logowania lista pracowników nie może iść bez sesji").toEqual([]);
-    await expect(page.getByRole("heading", { name: /^Pracownicy · / })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: BRAK_LISTY })).toHaveCount(0);
   });
 
   await test.step("ponowienie logowania się udaje i lista przychodzi z tą sesją", async () => {
@@ -173,10 +179,20 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     expect(obce(api.lista, START), "Lista po ponowieniu z inną sesją niż rola startowa").toEqual([]);
     await expect(page.getByRole("button", { name: PONOW }), "Przycisk ponowienia nie znika po udanym logowaniu").toHaveCount(0);
   });
+}
 
-  let listaOdOstatniej = 0;
-  let widokOdOstatniej = 0;
+/** Start bez błędu: rola startowa loguje się od razu i lista przychodzi z jej sesją. */
+async function startBezBledu(page: Page, api: MakietaApi) {
+  await test.step("rola startowa loguje się bez błędu", async () => {
+    await page.goto("/");
+    await expect(naglowekListy(page, START)).toBeVisible();
+    expect(obce(api.lista, START), "Lista z inną sesją niż rola startowa").toEqual([]);
+  });
+}
 
+/** Krok 4: dwie zmiany roli, odpowiedzi logowania wracają w odwrotnej kolejności. Zwraca, od których zapytań liczyć rolę kadry. */
+async function odwroconeOdpowiedzi(page: Page, api: MakietaApi) {
+  const od = { lista: 0, widok: 0 };
   await test.step("dwie zmiany roli: odpowiedzi logowania wracają w odwrotnej kolejności", async () => {
     api.zatrzymaj(PORZUCONA);
     api.zatrzymaj(OSTATNIA);
@@ -184,8 +200,8 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     await wybierzRole(page, /kierownik urzędu/);
     await expect.poll(() => api.ile(PORZUCONA), { message: "Brak logowania roli kierownik" }).toBeGreaterThan(0);
 
-    listaOdOstatniej = api.lista.length;
-    widokOdOstatniej = api.widok.length;
+    od.lista = api.lista.length;
+    od.widok = api.widok.length;
     await wybierzRole(page, /^kadry/);
     await expect.poll(() => api.ile(OSTATNIA), {
       message: "Logowanie roli kadry nie wyszło, choć logowanie roli kierownik wciąż trwa",
@@ -200,7 +216,11 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     await expect(naglowekListy(page, PORZUCONA)).toHaveCount(0);
     await expect(page.getByRole("navigation", { name: "Menu" })).toContainText("kadry / zarządzający");
   });
+  return od;
+}
 
+/** Krok 5: po wszystkim lista idzie z sesją ostatnio wybranej roli – po powrocie do widoku i po odświeżeniu. */
+async function sesjaOstatniejRoli(page: Page, api: MakietaApi, od: { lista: number; widok: number }) {
   await test.step("po wszystkim lista pracowników idzie z sesją ostatnio wybranej roli", async () => {
     const przedPowrotem = api.lista.length;
     const menu = page.getByRole("navigation", { name: "Menu" });
@@ -211,9 +231,9 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     }).toBeGreaterThan(przedPowrotem);
 
     expect(api.lista, "Sesja porzuconej roli nie może posłużyć do pobrania listy").not.toContain(token(PORZUCONA));
-    expect(obce(api.lista.slice(listaOdOstatniej), OSTATNIA), "Lista po wyborze roli kadry z inną sesją").toEqual([]);
+    expect(obce(api.lista.slice(od.lista), OSTATNIA), "Lista po wyborze roli kadry z inną sesją").toEqual([]);
     await expect(naglowekListy(page, OSTATNIA)).toBeVisible();
-    expect(obce(api.widok.slice(widokOdOstatniej), OSTATNIA), "Kalendarz ocen po wyborze roli kadry z inną sesją").toEqual([]);
+    expect(obce(api.widok.slice(od.widok), OSTATNIA), "Kalendarz ocen po wyborze roli kadry z inną sesją").toEqual([]);
   });
 
   await test.step("po odświeżeniu strony zostaje ostatnio wybrana rola", async () => {
@@ -225,4 +245,30 @@ test("lista pracowników idzie z sesją ostatnio wybranej roli mimo błędu logo
     expect(obce(api.lista.slice(lista), OSTATNIA), "Lista po odświeżeniu z inną sesją").toEqual([]);
     await expect(naglowekListy(page, OSTATNIA)).toBeVisible();
   });
+}
+
+async function makieta(page: Page) {
+  const api = new MakietaApi();
+  await api.podlacz(page);
+  return api;
+}
+
+// --- Testy ------------------------------------------------------------------------------------
+// Każdy błąd ma własny test, więc brak ponowienia nie zasłania błędu kolejności odpowiedzi (i odwrotnie).
+
+test("opóźnione logowanie, błąd pierwszej próby i udane ponowienie", async ({ page }) => {
+  const api = await makieta(page);
+  await startZBledemIPonowieniem(page, api);
+});
+
+test("odpowiedzi logowania w odwrotnej kolejności: lista z sesją ostatnio wybranej roli", async ({ page }) => {
+  const api = await makieta(page);
+  await startBezBledu(page, api);
+  await sesjaOstatniejRoli(page, api, await odwroconeOdpowiedzi(page, api));
+});
+
+test("pełny scenariusz: błąd i ponowienie, potem odwrócone odpowiedzi – lista z sesją ostatnio wybranej roli", async ({ page }) => {
+  const api = await makieta(page);
+  await startZBledemIPonowieniem(page, api);
+  await sesjaOstatniejRoli(page, api, await odwroconeOdpowiedzi(page, api));
 });
