@@ -1,4 +1,4 @@
-import { expect, test, type Page, type Request, type Route } from "playwright/test";
+import { expect, test, type Page, type Request, type Route } from "@playwright/test";
 
 /**
  * Sesja roli w przeglądarce (App.tsx + api.ts), na makiecie API – bez backendu.

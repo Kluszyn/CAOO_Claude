@@ -1,4 +1,4 @@
-import { defineConfig, devices } from "playwright/test";
+import { defineConfig, devices } from "@playwright/test";
 
 // Testy przeglądarkowe interfejsu: API jest makietą w teście (page.route), więc backend nie jest potrzebny.
 // Pierwsze uruchomienie: npx playwright install chromium
