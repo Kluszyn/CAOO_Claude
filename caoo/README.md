@@ -162,3 +162,13 @@ uv run caoo-waliduj --manifest ../konfiguracja/korpus.yaml ../konfiguracja/regul
 ```
 
 CI (`.github/workflows/caoo.yml`) uruchamia walidator i testy przy PR do `main`. Cytat spoza korpusu kończy walidator kodem 1 (test `test_walidator_pada_przy_cytacie_spoza_korpusu`).
+
+### Test przeglądarkowy sesji roli
+
+```sh
+cd caoo/frontend
+npm ci && npx playwright install chromium   # raz
+npm run test:e2e                             # sam uruchamia vite na 5173; backend niepotrzebny
+```
+
+`e2e/sesja-roli.spec.ts` podstawia makietę API w przeglądarce. Logowanie roli startowej najpierw się przeciąga, a potem kończy błędem 503. Test sprawdza, że w tym czasie nie idzie żadne zapytanie o listę pracowników. Ponowienie może być samoczynne albo przyciskiem „Spróbuj ponownie”. Potem następują dwie szybkie zmiany roli (kierownik → kadry), a odpowiedzi logowania wracają w odwrotnej kolejności. Na koniec lista pracowników i kalendarz ocen mają iść z tokenem roli kadry, także po powrocie do widoku i po odświeżeniu strony. Kolejność odpowiedzi ustalają bramki w makiecie, nie opóźnienia czasowe.
